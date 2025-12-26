@@ -30,10 +30,7 @@ This prevents malicious SQL files from:
 - Creating unauthorized databases
 - Creating new users
 - Granting elevated privileges
-```bash
-apt-get install mysql-client  # Debian/Ubuntu
-yum install mysql             # CentOS/RHEL
-```
+
 
 ### "The SQL File must be a file of type..."
 Make sure you're uploading a valid `.sql` file. The plugin accepts these MIME types:
