@@ -1,33 +1,36 @@
 <?php
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Max Upload Size
-    |--------------------------------------------------------------------------
-    |
-    | Taille maximale du fichier SQL uploadé en Ko (par défaut 10 Mo)
-    |
-    */
+
     'max_upload_size' => env('DATABASE_IMPORT_EXPORT_MAX_SIZE', 10240),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Temporary Export Directory
-    |--------------------------------------------------------------------------
-    |
-    | Dossier temporaire pour les exports SQL
-    |
-    */
+
     'export_temp_dir' => storage_path('app/temp-exports'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Import Timeout
-    |--------------------------------------------------------------------------
-    |
-    | Timeout en secondes pour l'import (par défaut 300s = 5 min)
-    |
-    */
+
     'import_timeout' => env('DATABASE_IMPORT_EXPORT_TIMEOUT', 300),
+
+
+    'export_settings' => [
+        'no-create-db' => true,
+        'add-drop-table' => true,
+        'add-drop-trigger' => true,
+        'skip-definer' => true,
+        'single-transaction' => true,
+        'lock-tables' => false,
+        'add-locks' => true,
+        'extended-insert' => true,
+        'disable-keys' => true,
+        'default-character-set' => 'utf8mb4',
+    ],
+
+    'blocked_statements' => [
+        'CREATE DATABASE',
+        'DROP DATABASE',
+        'CREATE USER',
+        'DROP USER',
+        'GRANT',
+        'REVOKE',
+        'USE ',
+    ],
 ];

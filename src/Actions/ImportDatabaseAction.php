@@ -54,10 +54,20 @@ class ImportDatabaseAction extends Action
                 try {
                     $service->import($record, $data['sql_file']);
 
-                    Notification::make()
-                        ->title('Database ' . $record->database . ' imported successfully')
-                        ->success()
-                        ->send();
+                    $filteredStatements = $service->getFilteredStatements();
+
+                    if (!empty($filteredStatements)) {
+                        Notification::make()
+                            ->title('Database imported with warnings')
+                            ->body(count($filteredStatements) . ' dangerous statement(s) were filtered (CREATE DATABASE, CREATE USER, GRANT, etc.)')
+                            ->warning()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Database ' . $record->database . ' imported successfully')
+                            ->success()
+                            ->send();
+                    }
                 } catch (Exception $exception) {
                     Notification::make()
                         ->title('Database import failed')

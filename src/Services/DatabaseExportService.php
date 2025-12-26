@@ -4,12 +4,11 @@ namespace DatabaseImportExport\Services;
 
 use App\Models\Database;
 use Exception;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Ifsnop\Mysqldump\Mysqldump;
+use Illuminate\Support\Facades\Log;
 
 class DatabaseExportService
 {
-
     public function export(Database $database): string
     {
         $host = $database->host->host;
@@ -25,28 +24,48 @@ class DatabaseExportService
             mkdir(dirname($filepath), 0755, true);
         }
 
-        $command = sprintf(
-            'mysqldump --user=%s --password=%s --host=%s --port=%d %s > %s 2>&1',
-            escapeshellarg($username),
-            escapeshellarg($password),
-            escapeshellarg($host),
-            $port,
-            escapeshellarg($databaseName),
-            escapeshellarg($filepath)
-        );
+        try {
+            $dsn = sprintf(
+                'mysql:host=%s;port=%d;dbname=%s',
+                $host,
+                $port,
+                $databaseName
+            );
 
-        $output = [];
-        $returnVar = 0;
-        exec($command, $output, $returnVar);
+            $dumpSettings = config('database-import-export.export_settings', [
+                'no-create-db' => true,
+                'add-drop-table' => true,
+                'skip-definer' => true,
+                'single-transaction' => true,
+                'default-character-set' => 'utf8mb4',
+            ]);
 
-        if ($returnVar !== 0) {
-            throw new Exception('Export failed: ' . implode("\n", $output));
+            $dump = new Mysqldump($dsn, $username, $password, $dumpSettings);
+            
+            $dump->start($filepath);
+
+            if (!file_exists($filepath) || filesize($filepath) === 0) {
+                throw new Exception('Export file is empty or was not created');
+            }
+
+            Log::info('Database exported successfully', [
+                'database' => $databaseName,
+                'file' => $filename,
+                'size' => filesize($filepath),
+            ]);
+
+            return $filepath;
+        } catch (Exception $e) {
+            Log::error('Database export failed', [
+                'database' => $databaseName,
+                'error' => $e->getMessage(),
+            ]);
+            
+            if (file_exists($filepath)) {
+                unlink($filepath);
+            }
+            
+            throw new Exception('Export failed: ' . $e->getMessage());
         }
-
-        if (!file_exists($filepath) || filesize($filepath) === 0) {
-            throw new Exception('Export file is empty or was not created');
-        }
-
-        return $filepath;
     }
 }
